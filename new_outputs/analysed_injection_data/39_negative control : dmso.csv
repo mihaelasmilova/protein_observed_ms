@@ -1,0 +1,4 @@
+,Injection name,Compound name,Injection time,Observed mass,Theoretical mass,Number ligands,ppm Error to nearest peak,Relative labelling
+0,39_negative control : dmso,negative control : dmso,25.4,33796.17385501075,33796.295000000035,0,3.5845642040682666,0.0
+1,39_negative control : dmso,negative control : dmso,82.41,33796.302739267056,33796.295000000035,0,0.22899749871848224,0.0
+2,39_negative control : dmso,negative control : dmso,202.41,33796.32305855452,33796.295000000035,0,0.8302257535156865,0.0

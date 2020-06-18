@@ -1,3 +1,4 @@
+from __future__ import print_function, division
 import os
 
 import matplotlib.pyplot as plt
@@ -9,21 +10,7 @@ from rdkit.Chem.Descriptors import MolWt
 from rdkit.Chem import AllChem
 from rdkit.Chem.Draw import DrawingOptions
 from collections import defaultdict
-
-
-def get_molecule_data_from_smiles(compound_smiles, compound_mw_correction):
-    try:
-        compound_mol = Chem.MolFromSmiles(compound_smiles)
-        AllChem.Compute2DCoords(compound_mol)
-        compound_mw = MolWt(compound_mol)
-        corrected_compound_mw = compound_mw + compound_mw_correction
-
-    except TypeError:
-        compound_mw = 0.0
-        corrected_compound_mw = 0.0
-        compound_mol = None
-
-    return compound_mol, compound_mw, corrected_compound_mw
+import analyse
 
 
 def scale_y_data(compound_data, scaling_factor):
@@ -41,7 +28,7 @@ def draw_mol_rdkit(compound_mol):
     DrawingOptions.dotsPerAngstrom = 100
     DrawingOptions.atomLabelFontSize = 55
     try:
-        im = Chem.Draw.MolToImage(compound_mol, size=(600, 600))
+        im = Chem.Draw.MolToImage(compound_mol, size=(200, 200))
         return im
     except ValueError:
         return
@@ -107,7 +94,7 @@ def plot_compound_summary(injection_name,
     :return:
     """
     # Get molecule data
-    compound_mol, compound_mw, corrected_compound_mw = get_molecule_data_from_smiles(compound_smiles, compound_mw_correction)
+    compound_mol, compound_mw, corrected_compound_mw = analyse.get_molecule_data_from_smiles(compound_smiles, compound_mw_correction)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
     # Show the spectra
@@ -125,7 +112,7 @@ def plot_compound_summary(injection_name,
             peaks, _ = find_peaks(y_data, prominence=1500, distance=10)
             x_add,y_add=move_labels(x_data,y_data,peaks)
             for p in peaks:
-                ax1.annotate(s=str(int(x_data[p])),
+                ax1.annotate(s=str(x_data[p]),
                              xy=(x_data[p]+x_add[p], y_data[p]+y_add[p]),
                              rotation=45,
                              bbox=peak_props)
