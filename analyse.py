@@ -10,7 +10,7 @@ import numpy as np
 from scipy.signal import find_peaks
 
 
-def get_molecule_data_from_smiles(compound_smiles, compound_mw_correction):
+def get_molecule_data_from_smiles(compound_smiles, compound_mw_correction=0):
     try:
         compound_mol = Chem.MolFromSmiles(compound_smiles)
         AllChem.Compute2DCoords(compound_mol)
@@ -76,50 +76,54 @@ def correct_peak_mass(peak_index, x_data, y_data, p_range=5):
 
 
 def assign_peaks(daltons, scaled_counts, theory_mw_protein, theory_mw_ligand, prominence, correct_peak_positions=True):
-    peaks, peak_info = find_peaks(scaled_counts, prominence)
+    prominence_thresh = max(scaled_counts)*prominence
+    peaks, peak_info = find_peaks(scaled_counts, prominence=prominence_thresh, distance=10.0)
     if correct_peak_positions:
         peak_masses = [correct_peak_mass(p, daltons, scaled_counts, p_range=5) for p in peaks]
     else:
         peak_masses = daltons[peaks]
 
-    max_peak_mass = np.max(peak_masses)
-    target_mass = theory_mw_protein
-    ligand_count = 0
     peak_data = []
 
-    while target_mass <= max_peak_mass + 5.0:
-        ppm_errors = np.array([mass_error_ppm(peak_mass, target_mass) for peak_mass in peak_masses])
-        min_ppm_idx = np.where(ppm_errors == np.min(ppm_errors))[0][0]
-        peak_observed_mass = peak_masses[min_ppm_idx]
-        peak_index = peaks[min_ppm_idx]
-        peak_data.append([peak_index, peak_observed_mass, target_mass, ligand_count, np.min(ppm_errors)])
+    if theory_mw_ligand >0.0:
+        lig_numbers = int(round((daltons[-1] - theory_mw_protein) / theory_mw_ligand))
+        theory_masses = [(theory_mw_protein + x * theory_mw_ligand) for x in range(lig_numbers)]
+    else:
+        lig_numbers = 0
+        theory_masses = [theory_mw_protein]
 
-        ligand_count += 1
-        # Avoid getting stuck in endless loop with the negative control...
-        if theory_mw_ligand >0.0:
-            target_mass += ligand_count*theory_mw_ligand
-        else:
-            break
+    for i, p in enumerate(peaks):
+        peak_mass = peak_masses[i]
+        ppm_errors = np.array([mass_error_ppm(peak_mass, t_mass) for t_mass in theory_masses])
+        min_ppm_idx = np.where(ppm_errors == np.min(ppm_errors))[0][0]
+        error_to_closest_theory_peak = ppm_errors[min_ppm_idx]
+        closest_theory_peak = theory_masses[min_ppm_idx]
+        closest_ligand_count = min_ppm_idx
+        peak_data.append([p, peak_mass, error_to_closest_theory_peak, closest_theory_peak, closest_ligand_count])
 
     return peak_data
 
+def calculate_relative_labelling(peak_data, scaled_counts, ppm_error=50.0):
+    # Get the unlabelled protein peak
+    peak_data = np.array(peak_data)
+    possible_unlabelled = peak_data[np.where(peak_data[:, -1] == 0)]
+    unlabelled_row = possible_unlabelled[np.argmin(possible_unlabelled[:, 2])]
 
-def calculate_relative_labelling(peak_data, scaled_counts, ppm_error=5.0):
-    unlabelled_protein_peak_index = peak_data[0][0]
+    unlabelled_protein_peak_index = int(unlabelled_row[0])
     unlabelled_protein_peak_counts = scaled_counts[unlabelled_protein_peak_index]
 
     labelled_peak_idxs = []
 
-    for p in peak_data[1:]:
-        if p[-1]<=ppm_error:
-            labelled_peak_idxs.append(p[0])
+    for p in peak_data:
+        if p[2] <= ppm_error and int(p[0]) != unlabelled_protein_peak_index:
+            labelled_peak_idxs.append(int(p[0]))
 
     total_labelled_counts = sum([scaled_counts[p_indx] for p_indx in labelled_peak_idxs])
 
     percent_contribs = []
     for p in peak_data:
-        if p[0] in labelled_peak_idxs:
-            labelled_ratio = np.divide(scaled_counts[p[0]]*100, (unlabelled_protein_peak_counts + total_labelled_counts))
+        if int(p[0]) in labelled_peak_idxs:
+            labelled_ratio = np.divide(scaled_counts[int(p[0])]*100, (unlabelled_protein_peak_counts + total_labelled_counts))
             percent_contribs.append(labelled_ratio)
         else:
             percent_contribs.append(0.0)

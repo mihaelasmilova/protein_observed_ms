@@ -7,7 +7,7 @@ import analyse
 import visualise
 import parse_agilent_raw_data
 
-def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, protein_sequence, protein_oligo_state, mass_window, peak_prominence, ppm_error=5.0, correct_peak_discretisation=True):
+def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, protein_sequence, protein_oligo_state, mass_window, peak_prominence, ppm_error=5.0, correct_peak_discretisation=True, display_mass_window=None):
     """
 
     :param data_files_dict:
@@ -46,9 +46,10 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
     if not os.path.exists(analysed_data_path): os.mkdir(analysed_data_path)
 
     for i, i_name in enumerate(injection_names):
-        injection_df_columns = ['Injection name', 'Compound name', 'Injection time', 'Observed mass', 'Theoretical mass', 'Number ligands', 'ppm Error to nearest peak','Relative labelling']
+        injection_df_columns = ['Injection name', 'Compound name', 'Injection time', 'Peak mass', 'Error to closest theory mass (ppm)', 'Closest theory mass', 'Ligand count', 'Relative labelling']
         injection_df = pd.DataFrame(columns=injection_df_columns)
 
+        peak_plotting_data = []
         timepoint_peak_data = []
         for t in timepoints:
             compound_smiles = compound_data_df['Smiles'][i]
@@ -71,6 +72,7 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
             window_scaled_y_data = scaled_y_data[mass_window_idxs[0]:mass_window_idxs[1]]
             window_x_data = x_data[mass_window_idxs[0]: mass_window_idxs[1]]
 
+            peak_plotting_data.append(np.array([window_x_data, window_scaled_y_data]))
             analysed_peaks = analyse.assign_peaks(daltons=window_x_data,
                                                   scaled_counts=window_scaled_y_data,
                                                   theory_mw_protein=theory_mass_protein,
@@ -79,6 +81,18 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
                                                   correct_peak_positions=correct_peak_discretisation)
 
             labelling_percentages = analyse.calculate_relative_labelling(analysed_peaks, window_scaled_y_data, ppm_error)
+
+            # # Visualise the ouputs:
+            # single_timepoint_spectra = os.path.join(pipeline_output_path, 'single_timepoint_spectra')
+            # if not os.path.exists(single_timepoint_spectra): os.mkdir(single_timepoint_spectra)
+            # visualise.show_single_timepoint_peaks(analysed_peaks,
+            #                                       window_x_data,
+            #                                       window_scaled_y_data,
+            #                                       labelling_percentages,
+            #                                       single_timepoint_spectra,
+            #                                       i_name,
+            #                                       ms_data_injection_df['Timepoint'][0],
+            #                                       50.00)
 
             for ap, lp in zip(analysed_peaks, labelling_percentages):
                 df_list = [i_name, compound_data_df['Compounds List'][i],ms_data_injection_df['Timepoint'][0], ap[1], ap[2], ap[3], ap[4], lp]
@@ -96,6 +110,27 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
         injection_df_fname = os.path.join(analysed_data_path, "{}.csv".format(i_name))
         injection_df.to_csv(injection_df_fname)
 
+        # Visualise the outputs
+        # TODO: catch error if compound_smiles and corrected_compound_mw not assigned
+        compound_summaries_dir = os.path.join(pipeline_output_path, "injection_summary_images")
+        if not os.path.exists(compound_summaries_dir): os.mkdir(compound_summaries_dir)
+
+        if display_mass_window:
+            for d in range(len(peak_plotting_data)):
+                data = peak_plotting_data[d]
+                d_mass_window_idxs = [np.where(data[0] == m)[0][0] for m in display_mass_window]
+                print(d_mass_window_idxs)
+                print(data.shape)
+                peak_plotting_data[d] = data[:, d_mass_window_idxs[0]:d_mass_window_idxs[1]]
+                print(peak_plotting_data[d].shape)
+
+        png_path = visualise.plot_compound_summary_new(compound_data=peak_plotting_data,
+                                            injection_df_fname=injection_df_fname,
+                                            expected_protein_mass=theory_mass_protein,
+                                            compound_smiles=compound_smiles,
+                                            corrected_compound_mass=corrected_compound_mw,
+                                            save_dir=compound_summaries_dir)
+
 
 if __name__ == '__main__':
     # Parameters needed to run the pipeline:
@@ -109,8 +144,9 @@ if __name__ == '__main__':
     pipeline_output_path = 'pipeline_output'
     protein_seq_fasta = "SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ"
     target_mass_window = [33500, 40000]
-    peak_prominence = 100.0
-    ppm_error=50.0
+    plotting_mass_window = [33500, 35000]
+    peak_prominence = 0.02
+    ppm_error = 100.0
 
     main(data_files_dict=data_files,
          timepoints=timepoints,
@@ -120,4 +156,5 @@ if __name__ == '__main__':
          protein_oligo_state=1,
          mass_window=target_mass_window,
          peak_prominence=peak_prominence,
-         ppm_error=ppm_error)
+         ppm_error=ppm_error,
+         display_mass_window=plotting_mass_window)

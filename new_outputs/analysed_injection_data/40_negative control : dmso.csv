@@ -1,4 +1,17 @@
-,Injection name,Compound name,Injection time,Observed mass,Theoretical mass,Number ligands,ppm Error to nearest peak,Relative labelling
-0,40_negative control : dmso,negative control : dmso,25.87,33796.18501750088,33796.295000000035,0,3.2542768121264323,0.0
-1,40_negative control : dmso,negative control : dmso,82.89,33796.35130081495,33796.295000000035,0,1.66588719024848,0.0
-2,40_negative control : dmso,negative control : dmso,202.9,33796.28473942603,33796.295000000035,0,0.3036005574883651,0.0
+,Injection name,Compound name,Injection time,Peak mass,Error to closest theory mass (ppm),Closest theory mass,Ligand count,Relative labelling
+0,40_negative control : dmso,negative control : dmso,25.87,33796.18501750088,3.2542768121264323,33796.295000000035,0,0.0
+1,40_negative control : dmso,negative control : dmso,25.87,33816.24638976821,590.3425144139443,33796.295000000035,0,0.0
+2,40_negative control : dmso,negative control : dmso,25.87,34034.6925134805,7053.954094094156,33796.295000000035,0,0.0
+3,40_negative control : dmso,negative control : dmso,25.87,34210.526859996906,12256.723998795453,33796.295000000035,0,0.0
+4,40_negative control : dmso,negative control : dmso,82.89,33796.35130081495,1.66588719024848,33796.295000000035,0,0.0
+5,40_negative control : dmso,negative control : dmso,82.89,33804.213656333435,234.3054566602809,33796.295000000035,0,0.0
+6,40_negative control : dmso,negative control : dmso,82.89,33818.35767877911,652.8135341189083,33796.295000000035,0,0.0
+7,40_negative control : dmso,negative control : dmso,82.89,33828.764545745,960.7427602630219,33796.295000000035,0,0.0
+8,40_negative control : dmso,negative control : dmso,82.89,34211.18654273782,12276.243379275347,33796.295000000035,0,0.0
+9,40_negative control : dmso,negative control : dmso,202.9,33785.465170951145,320.4442690800637,33796.295000000035,0,0.0
+10,40_negative control : dmso,negative control : dmso,202.9,33796.28473942603,0.3036005574883651,33796.295000000035,0,0.0
+11,40_negative control : dmso,negative control : dmso,202.9,33807.40196949086,328.6445893202769,33796.295000000035,0,0.0
+12,40_negative control : dmso,negative control : dmso,202.9,33821.656677113984,750.4277351688854,33796.295000000035,0,0.0
+13,40_negative control : dmso,negative control : dmso,202.9,33831.1641587209,1031.7450099446344,33796.295000000035,0,0.0
+14,40_negative control : dmso,negative control : dmso,202.9,33864.314946848346,2012.6450798323144,33796.295000000035,0,0.0
+15,40_negative control : dmso,negative control : dmso,202.9,34210.76269696427,12263.702188782478,33796.295000000035,0,0.0

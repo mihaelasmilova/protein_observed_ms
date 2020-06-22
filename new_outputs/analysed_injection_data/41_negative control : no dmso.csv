@@ -1,4 +1,15 @@
-,Injection name,Compound name,Injection time,Observed mass,Theoretical mass,Number ligands,ppm Error to nearest peak,Relative labelling
-0,41_negative control : no dmso,negative control : no dmso,26.58,33796.20776721551,33796.295000000035,0,2.5811345453153596,0.0
-1,41_negative control : no dmso,negative control : no dmso,83.6,33796.27151017273,33796.295000000035,0,0.6950414921141278,0.0
-2,41_negative control : no dmso,negative control : no dmso,203.59,33796.34912715365,33796.295000000035,0,1.6015706340911238,0.0
+,Injection name,Compound name,Injection time,Peak mass,Error to closest theory mass (ppm),Closest theory mass,Ligand count,Relative labelling
+0,41_negative control : no dmso,negative control : no dmso,26.58,33796.20776721551,2.5811345453153596,33796.295000000035,0,0.0
+1,41_negative control : no dmso,negative control : no dmso,26.58,33817.69695122296,633.2632385570037,33796.295000000035,0,0.0
+2,41_negative control : no dmso,negative control : no dmso,26.58,34034.849106769776,7058.587539543642,33796.295000000035,0,0.0
+3,41_negative control : no dmso,negative control : no dmso,26.58,34209.56474360285,12228.25589618084,33796.295000000035,0,0.0
+4,41_negative control : no dmso,negative control : no dmso,83.6,33796.27151017273,0.6950414921141278,33796.295000000035,0,0.0
+5,41_negative control : no dmso,negative control : no dmso,83.6,33807.498365440195,331.49685313612804,33796.295000000035,0,0.0
+6,41_negative control : no dmso,negative control : no dmso,83.6,33826.30423092644,887.9444011956724,33796.295000000035,0,0.0
+7,41_negative control : no dmso,negative control : no dmso,83.6,33858.29519220955,1834.526305605923,33796.295000000035,0,0.0
+8,41_negative control : no dmso,negative control : no dmso,83.6,34210.32248654544,12250.676784109159,33796.295000000035,0,0.0
+9,41_negative control : no dmso,negative control : no dmso,203.59,33757.155749942285,1158.092922841081,33796.295000000035,0,0.0
+10,41_negative control : no dmso,negative control : no dmso,203.59,33796.34912715365,1.6015706340911238,33796.295000000035,0,0.0
+11,41_negative control : no dmso,negative control : no dmso,203.59,33817.8564255953,637.9819324949013,33796.295000000035,0,0.0
+12,41_negative control : no dmso,negative control : no dmso,203.59,33828.30010450386,947.000388765311,33796.295000000035,0,0.0
+13,41_negative control : no dmso,negative control : no dmso,203.59,34209.494802548055,12226.18640735679,33796.295000000035,0,0.0
