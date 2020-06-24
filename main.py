@@ -133,14 +133,22 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
 
 
 if __name__ == '__main__':
+    import sys
+
     # Parameters needed to run the pipeline:
-    raw_data_direc = "../Protein observe MS_raw/Data analysis/Processed raw data/Shipment 4 and 5 hits/200527/Raw data from Agilent/Full .csv dataset for each timepoint"
+    raw_data_direc = r"..\Protein observe MS_raw\Data analysis\Processed raw data\Shipment 4 and 5 hits\200527\Raw data from Agilent\Full .csv dataset for each timepoint"
     data_files = {60: os.path.join(raw_data_direc, "1h all injections.csv"),
                   3: os.path.join(raw_data_direc, "200611 Moonshot 3 minutes.csv"),
                   180: os.path.join(raw_data_direc, "3H all injections.csv")}
+    if sys.platform=="win32":
+        for v in data_files.values():
+            v.replace(r"\\\\", r"\\")
     timepoints = sorted(list(data_files.keys()))
 
-    compound_data_path = "../Protein observe MS_raw/200527 Shipment 4 and 5 compound list.csv"
+    compound_data_path = r"..\Protein observe MS_raw\200527 Shipment 4 and 5 compound list.csv"
+    if sys.platform=="win32":
+        compound_data_path.replace(r"\\\\", r"\\")
+
     pipeline_output_path = 'pipeline_output'
     protein_seq_fasta = "SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ"
     target_mass_window = [33500, 40000]
