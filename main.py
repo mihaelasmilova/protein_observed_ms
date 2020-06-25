@@ -169,7 +169,7 @@ def main(config_file_path='config.yaml'):
                                             
         image_names.append(png_path)
         
-    with open('image_names.csv', 'w') as f:
+    with open(os.path.join(pipeline_output_path,'image_names.csv'), 'w') as f:
         f.write(',\n'.join(image_names))
     all_df=pd.concat(df_master_list)
     new_df=all_df.drop(all_df.columns[0],1)
