@@ -1,0 +1,4 @@
+*.pyc
+*.ipynb
+.ipynb_checkpoints/*
+new_outputs/all_timepoints_injections_split/*

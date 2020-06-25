@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 import csv
-import os
+import os,re
 import logging
 
 
@@ -82,6 +82,7 @@ def save_individual_injections(all_data,
     for i in range(len(all_data)):
         injection_name = injection_names[i]
         injection_fname = os.path.join(save_directory, injection_name)
+        injection_fname = re.sub('\s+','-',injection_fname.replace(':',''))
         injection_data = all_data[i]
         column_names = headers[i]
         corrected_time = minutes[i]

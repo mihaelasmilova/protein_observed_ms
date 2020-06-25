@@ -136,6 +136,7 @@ def plot_compound_summary_new(compound_data,
     injection_df = pd.read_csv(injection_df_fname)
     injection_name = injection_df['Injection name'][0]
     image_save_fname = os.path.join(save_dir, "{}.png".format(injection_name))
+    image_save_fname = re.sub('\s+','-',image_save_fname.replace(':',''))
 
     compound_mol, _, _ = analyse.get_molecule_data_from_smiles(compound_smiles)
     # Create the molecule picture:
@@ -232,9 +233,9 @@ def plot_compound_summary_new(compound_data,
     ppeak_props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
     plt.text(0.6, 0.6, textstr, fontsize=10, transform=ax1.transAxes, bbox=ppeak_props)
     plt.suptitle(injection_name)
-    fig.savefig(re.sub('\s+','-',image_save_fname.replace(':','')))
+    fig.savefig(image_save_fname)
     plt.close()
-    return
+    return image_save_fname
 
 
 

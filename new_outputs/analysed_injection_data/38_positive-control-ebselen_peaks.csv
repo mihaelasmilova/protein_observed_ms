@@ -1,0 +1,14 @@
+,Injection name,Compound name,Injection time,Peak mass,Error to closest theory mass (ppm),Closest theory mass,Ligand count,Relative labelling
+0,38_positive-control-ebselen,positive control : ebselen,24.69,33796.219298675234,2.239929696445139,33796.295000000035,0,0.0
+1,38_positive-control-ebselen,positive control : ebselen,24.69,33816.30440232507,592.0590504087763,33796.295000000035,0,0.0
+2,38_positive-control-ebselen,positive control : ebselen,24.69,34210.686376368554,12261.443935452662,33796.295000000035,0,0.0
+3,38_positive-control-ebselen,positive control : ebselen,81.7,33796.17371318514,3.5887606879428535,33796.295000000035,0,0.0
+4,38_positive-control-ebselen,positive control : ebselen,81.7,33821.93841756853,758.764165376677,33796.295000000035,0,0.0
+5,38_positive-control-ebselen,positive control : ebselen,81.7,33830.80253465314,1021.0449001320534,33796.295000000035,0,0.0
+6,38_positive-control-ebselen,positive control : ebselen,81.7,34210.329375465524,12250.88062065647,33796.295000000035,0,0.0
+7,38_positive-control-ebselen,positive control : ebselen,201.71,33785.71533586467,313.0421288891672,33796.295000000035,0,0.0
+8,38_positive-control-ebselen,positive control : ebselen,201.71,33796.216409284294,2.325424006997644,33796.295000000035,0,0.0
+9,38_positive-control-ebselen,positive control : ebselen,201.71,33808.09386547293,349.1171287532516,33796.295000000035,0,0.0
+10,38_positive-control-ebselen,positive control : ebselen,201.71,33826.17571484832,884.1417335328712,33796.295000000035,0,0.0
+11,38_positive-control-ebselen,positive control : ebselen,201.71,33847.40035509302,1512.1585100670466,33796.295000000035,0,0.0
+12,38_positive-control-ebselen,positive control : ebselen,201.71,34210.46384620379,12254.859481009855,33796.295000000035,0,0.0

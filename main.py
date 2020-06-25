@@ -56,7 +56,10 @@ def main(config_file_path='config.yaml'):
 
     injection_names = ["{}_{}".format(j, i) for i, j in
                        zip(compound_data_df[columns[0]], compound_data_df[columns[1]])]
-
+    
+    for i in range(len(injection_names)): #clear spaces and :
+        injection_names[i]=re.sub('\s+','-',injection_names[i].replace(':',''))
+    
     if not os.path.exists(pipeline_output_path): os.mkdir(pipeline_output_path)
 
     split_save_dir = os.path.join(pipeline_output_path, "all_timepoints_injections_split")
@@ -86,6 +89,8 @@ def main(config_file_path='config.yaml'):
     analysed_data_path = os.path.join(pipeline_output_path, "analysed_injection_data")
     if not os.path.exists(analysed_data_path): os.mkdir(analysed_data_path)
 
+    image_names = []
+    df_master_list=[]
     for i, i_name in enumerate(injection_names):
         injection_df_columns = ['Injection name', 'Compound name', 'Injection time', 'Peak mass', 'Error to closest theory mass (ppm)', 'Closest theory mass', 'Ligand count', 'Relative labelling']
         injection_df = pd.DataFrame(columns=injection_df_columns)
@@ -139,6 +144,7 @@ def main(config_file_path='config.yaml'):
         # write the data somewhere sensible
         injection_df_fname = os.path.join(analysed_data_path, "{}_peaks.csv".format(i_name))
         injection_df.to_csv(re.sub('\s+','-',injection_df_fname.replace(':','')))
+        df_master_list.append(injection_df)
 
         # Visualise the outputs
         # TODO: catch error if compound_smiles and corrected_compound_mw not assigned
@@ -151,6 +157,7 @@ def main(config_file_path='config.yaml'):
                 d_mass_window_idxs = [np.where(data[0] == m)[0][0] for m in display_mass_window]
                 peak_plotting_data[d] = data[:, d_mass_window_idxs[0]:d_mass_window_idxs[1]]
 
+ 
         png_path = visualise.plot_compound_summary_new(compound_data=peak_plotting_data,
                                             injection_df_fname=injection_df_fname,
                                             expected_protein_mass=theory_mass_protein,
@@ -159,7 +166,14 @@ def main(config_file_path='config.yaml'):
                                             save_dir=compound_summaries_dir,
                                             x_axis_stagger=x_axis_stagger,
                                             y_axis_stagger=y_axis_stagger)
-
+                                            
+        image_names.append(png_path)
+        
+    with open('image_names.csv', 'w') as f:
+        f.write(',\n'.join(image_names))
+    all_df=pd.concat(df_master_list)
+    new_df=all_df.drop(all_df.columns[0],1)
+    new_df.to_csv(os.path.join(pipeline_output_path,'all_injections_analysed.csv'),index=False)
 
 if __name__ == '__main__':
                     
