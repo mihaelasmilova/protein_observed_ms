@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-import os
+import os,re
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -129,7 +129,9 @@ def plot_compound_summary_new(compound_data,
                               expected_protein_mass,
                               compound_smiles,
                               corrected_compound_mass,
-                              save_dir):
+                              save_dir,
+                              x_axis_stagger,
+                              y_axis_stagger):
 
     injection_df = pd.read_csv(injection_df_fname)
     injection_name = injection_df['Injection name'][0]
@@ -153,9 +155,6 @@ def plot_compound_summary_new(compound_data,
     expected_single_labelling = expected_protein_mass + corrected_compound_mass
     expected_double_labelling = expected_protein_mass + 2 * corrected_compound_mass
 
-    # Plotting offsets calculation:
-    x_axis_stagger = 100.0
-    y_axis_stagger = 5000.0
 
     fig, ax1 = plt.subplots(figsize=(15, 6))
     for d in range(len(timepoints)):
@@ -165,7 +164,12 @@ def plot_compound_summary_new(compound_data,
         peak_masses = peaks['Peak mass']
         # If the masses were corrected for discretisation, get them back to int
         peak_masses = np.array([int(round(m)) for m in peak_masses])
-        peak_masses_idxs = [np.where(x_data == pm)[0][0] for pm in peak_masses]
+        
+        try:
+            peak_masses_idxs = [np.where(x_data == pm)[0][0] for pm in peak_masses]
+        except IndexError:
+            print('Cannot find peaks for {} timepoint: {} within the plotting mass window range. Try setting a larger range. Moving to next injection'.format(injection_name, timepoints[d]))
+            pass
 
         single_labelled_peak = peaks[(peaks['Ligand count'] == 1) & (peaks['Relative labelling'] > 0)]
 
@@ -184,16 +188,21 @@ def plot_compound_summary_new(compound_data,
         table_data.append([timepoints[d], table_data_1, table_data_2])
 
         # offset x and y data:
+        x_axis_stagger = 1.0/15.0*(x_data[-1]-x_data[0])
+        
         x_data = x_data + d * x_axis_stagger
         y_data = y_data + d * y_axis_stagger
         peak_props = dict(boxstyle='round', facecolor='white', alpha=0.8)
         if d == 0:
-            x_add, y_add = move_labels(x_data, y_data, peak_masses_idxs)
-            for i, p in enumerate(peak_masses_idxs):
-                ax1.annotate(s=str(np.round(peaks['Peak mass'][i], 2)),
-                             xy=(x_data[p], y_data[p]),
-                             bbox=peak_props,
-                             rotation=25)
+            try:
+                x_add, y_add = move_labels(x_data, y_data, peak_masses_idxs)
+                for i, p in enumerate(peak_masses_idxs):
+                    ax1.annotate(s=str(np.round(peaks['Peak mass'][i], 2)),
+                                 xy=(x_data[p], y_data[p]),
+                                 bbox=peak_props,
+                                 rotation=25)
+            except:
+                pass
         # Plot the spectra
         ax1.plot(x_data, y_data, label=timepoints[d])
         ax1.set_xticks(np.arange(x_data[0], x_data[-1], step=500))
@@ -223,7 +232,7 @@ def plot_compound_summary_new(compound_data,
     ppeak_props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
     plt.text(0.6, 0.6, textstr, fontsize=10, transform=ax1.transAxes, bbox=ppeak_props)
     plt.suptitle(injection_name)
-    fig.savefig(image_save_fname)
+    fig.savefig(re.sub('\s+','-',image_save_fname.replace(':','')))
     plt.close()
     return
 
@@ -232,95 +241,7 @@ def plot_compound_summary_new(compound_data,
 
 
 
-def plot_compound_summary(injection_name,
-                          compound_data,
-                          timepoints,
-                          compound_smiles,
-                          expected_protein_mass,
-                          save_dir='',
-                          compound_mw_correction=0.0,
-                          x_axis_stagger=100,
-                          y_axis_stagger=10000,
-                          scaling_factor=50000):
-    """
-    Creates images for the compounds and compound spectra
-    :param injection_name: Name of the injection + compound
-    :param compound_data: list of 2d numpy arrays [timepoints: [timepoint_data[Da]: timepoint_data[counts]]
-    :param timepoints: list, eg ['1 hr', '2 mins'] needed for legend
-    :param compound_smiles: string,
-    :param expected_protein_mass: float, mass of protein with no compound
-    :param save_dir: str, path to where the image will be stored
-    :param compound_mw_correction: optional, supply for covalent compounds
-    :param x_axis_stagger: these control how far apart the timepoint spectra are staggered.
-    :param y_axis_stagger:
-    :param scaling_factor: re-scales y axis data
-    :return:
-    """
 
-    # Get molecule data
-    compound_mol, compound_mw, corrected_compound_mw = analyse.get_molecule_data_from_smiles(compound_smiles, compound_mw_correction)
-
-    fig, ax1 = plt.subplots(figsize=(15, 6))
-    # Show the spectra
-    # Scale the data. To view raw counts, can change this to scaled_y_data = compound_data, but plots may be harder to see.
-    scaled_y_data = scale_y_data(compound_data, scaling_factor)
-
-    for d in range(len(compound_data)):
-        x_data = compound_data[d][:, 1] + d * x_axis_stagger
-        y_data = scaled_y_data[d] + d * y_axis_stagger
-
-        # Add the peaks to the first trace
-        peak_props = dict(boxstyle='round', facecolor='white', alpha=0.8)
-        if d == 0:
-            #peaks = find_peaks(y_data, height=2500, distance=40)[0]
-            peaks, _ = find_peaks(y_data, prominence=1500, distance=10)
-            x_add,y_add=move_labels(x_data,y_data,peaks)
-            for p in peaks:
-                ax1.annotate(s=str(x_data[p]),
-                             xy=(x_data[p]+x_add[p], y_data[p]+y_add[p]),
-                             rotation=45,
-                             bbox=peak_props)
-        # Plot the spectra
-        ax1.plot(x_data, y_data, label=timepoints[d])
-        ax1.set_xticks(np.arange(x_data[0], x_data[-1], step=500))
-        ax1.get_yaxis().set_visible(False)
-        ax1.set_xlabel('Da', fontsize=14)
-        ax1.legend()
-
-    # place a text box in upper right showing compound MW and expected compound MW
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    textstr = 'Molecular weight: {} Da \nExpected labelling: {} Da'.format(round(compound_mw, 1),
-                                                                                   round(corrected_compound_mw, 1))
-    #ax1.text(0.6, 0.95, textstr, transform=ax2.transAxes, fontsize=12, verticalalignment='top', bbox=props)
-    prot_props = dict(boxstyle='round', facecolor='red', alpha=0.3)
-    prot_textstr = "Protein MW: {} Da \nExpected labelling: {} Da".format(expected_protein_mass, round(expected_protein_mass + corrected_compound_mw,1))
-    #ax1.text(0.6, 0.15, prot_textstr, transform=ax2.transAxes, fontsize=12, verticalalignment='top', bbox=prot_props)
-
-    # ax2.axis('off')
-    # ax2.set_title(injection_name, fontsize=14)
-
-    # Place a text box in lower right corner with protein data
-    try:
-        png_in = 'output.png'
-        im = Image.open(png_in)
-        im = np.array(im)
-        fig.figimage(im, fig.bbox.xmax*0.65, fig.bbox.ymax*0.40)
-    except TypeError:
-        pass
-
-    columns = ["Timepoint", "Peak mass", "Labelling", "Error"]
-    cell_text = [['3', '1000', 'Yes', '50'], ['3', '1000', 'Yes', '50'], ['3', '1000', 'Yes', '50']]
-
-
-    plt.subplots_adjust(left=0.02, right=0.6, top=0.9, bottom=0.1)
-    the_table = plt.table(cellText=cell_text,
-                          colLabels=columns,
-                          loc='bottom',
-                          bbox=[1.05, 0.0, 0.5, 0.3])
-
-    fig.savefig(os.path.join(save_dir, "{}.png".format(injection_name)))
-    plt.close()
-    return
 
 if __name__ == "__main__":
     import pandas as pd

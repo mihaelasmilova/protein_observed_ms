@@ -1,0 +1,27 @@
+# A csv file with headers: 'compound name', 'injection name', 'smiles', 'mass correction'.
+compound_data_path: ..\Protein observe MS_raw\200527 Shipment 4 and 5 compound list.csv
+
+# Raw data files from Agilent for each timepoint. Put the timepoints in minutes.
+raw_data_files:
+  3: ..\Protein observe MS_raw\Data analysis\Processed raw data\Shipment 4 and 5 hits\200527\Raw data from Agilent\Full .csv dataset for each timepoint\200611 Moonshot 3 minutes.csv
+  60: ..\Protein observe MS_raw\Data analysis\Processed raw data\Shipment 4 and 5 hits\200527\Raw data from Agilent\Full .csv dataset for each timepoint\1h all injections.csv
+  180: ..\Protein observe MS_raw\Data analysis\Processed raw data\Shipment 4 and 5 hits\200527\Raw data from Agilent\Full .csv dataset for each timepoint\3H all injections.csv
+  
+target_mass_window: # Where to look for multiple labelling peaks
+- 33500
+- 40000
+
+plotting_mass_window: # Which mass range to focus on for displaying the peaks in the compound summary. It has to be within the target mass window.
+- 33500
+- 35000
+
+ppm_error: 100.0 # Maximum allowed error for the peak detection
+
+protein_sequence: SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ
+protein_oligo_state: 1
+protein_mass: 0.0 #Set this if a specific theoretical mass is expected that is not predicted from the sequence (e.g. protonation at a specific pH). The code will not calculate mass from sequence and use this value instead.
+
+peak_prominence: 0.02 # Prominence is how much the peak stands out from the baseline. A prominence of 0.02 means that the minimal 'standing out' is 1/50th of the maximum counts observed.
+pipeline_output_path: new_outputs
+#Possible values for this parameter are 1 (or True) or 0 (or False)
+correct_peak_discretisation: 1 # If True, estimates the peak mass with sub-Dalton precision, even if the data points are 1 Da apart.

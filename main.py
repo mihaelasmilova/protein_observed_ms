@@ -6,18 +6,56 @@ import pandas as pd
 import analyse
 import visualise
 import parse_agilent_raw_data
+import yaml
+import sys
+import re
 
-def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, protein_sequence, protein_oligo_state, mass_window, peak_prominence, ppm_error=5.0, correct_peak_discretisation=True, display_mass_window=None):
+
+def main(config_file_path='config.yaml'):
     """
-
-    :param data_files_dict:
-    :param timepoints: int, the timepoint in minutes
-    :param compound_data_path:
+    :param config_file_path:
     :return:
     """
+    
+    if len(sys.argv)>2:
+        config_file_path=sys.argv[1].strip()
+    
+    if not os.path.isfile(config_file_path):
+        raise Exception('Configuration file not found at: '+config_file_path)
+    
+    with open(config_file_path) as f: #reading yaml file to yaml dict
+        yaml_dict = yaml.load(f, Loader=yaml.FullLoader)
+    
+
+    #transferring yaml_dict params to function params
+    data_files_dict=yaml_dict['raw_data_files']
+    compound_data_path=yaml_dict['compound_data_path']
+    
+    if sys.platform=="win32":
+        compound_data_path.replace(r"\\\\", r"\\")
+        for v in data_files_dict.values():
+            v.replace(r"\\\\", r"\\")
+            
+    timepoints = sorted(list(data_files_dict.keys()))
+    pipeline_output_path=yaml_dict['pipeline_output_path']
+    protein_sequence=yaml_dict['protein_sequence']
+    protein_oligo_state=yaml_dict['protein_oligo_state']
+    mass_window=yaml_dict['target_mass_window']
+    peak_prominence=yaml_dict['peak_prominence']
+    ppm_error=yaml_dict['ppm_error']
+    display_mass_window=yaml_dict['plotting_mass_window']
+    protein_mass=yaml_dict['protein_mass']
+    correct_peak_discretisation=bool(yaml_dict['correct_peak_discretisation'])
+    
+       
     compound_data_df = pd.read_csv(compound_data_path)
+    
+    columns = compound_data_df.columns # Get the header names for the dataframe. The names don't matter, but the order does
+    print('Expected column order in compound data spreadsheet:','(Compounds List)  (Injections)  (Smiles)  (Warhead type)  (Mass correction)')
+    print('Supplied columns: {}'.format(columns.values))
+
     injection_names = ["{}_{}".format(j, i) for i, j in
-                       zip(compound_data_df['Compounds List'], compound_data_df['Injections'])]
+                       zip(compound_data_df[columns[0]], compound_data_df[columns[1]])]
 
     if not os.path.exists(pipeline_output_path): os.mkdir(pipeline_output_path)
 
@@ -39,7 +77,10 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
                                                           time_header='Timepoint')
 
     #Get the expected protein mw:
-    theory_mass_protein = analyse.protein_mw_from_sequence(protein_sequence, oligo_state=protein_oligo_state)
+    if protein_mass == 0.0:
+        theory_mass_protein = analyse.protein_mw_from_sequence(protein_sequence, oligo_state=protein_oligo_state)
+    else:
+        theory_mass_protein = protein_mass
 
     # Find, assign peaks + extract relative labelling
     analysed_data_path = os.path.join(pipeline_output_path, "analysed_injection_data")
@@ -52,8 +93,8 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
         peak_plotting_data = []
         timepoint_peak_data = []
         for t in timepoints:
-            compound_smiles = compound_data_df['Smiles'][i]
-            compound_mw_correction = compound_data_df['mass changes compare to MW of compounds'][i]
+            compound_smiles = compound_data_df[columns[2]][i]
+            compound_mw_correction = compound_data_df[columns[3]][i]
             compound_mol, compound_mw, corrected_compound_mw = analyse.get_molecule_data_from_smiles(compound_smiles,
                                                                                                      compound_mw_correction)
 
@@ -71,6 +112,8 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
 
             window_scaled_y_data = scaled_y_data[mass_window_idxs[0]:mass_window_idxs[1]]
             window_x_data = x_data[mass_window_idxs[0]: mass_window_idxs[1]]
+            x_axis_stagger = 1.0/15.0*(window_x_data[-1]-window_x_data[0])
+            y_axis_stagger = 0.1*(max(scaled_y_data))
 
             peak_plotting_data.append(np.array([window_x_data, window_scaled_y_data]))
             analysed_peaks = analyse.assign_peaks(daltons=window_x_data,
@@ -82,33 +125,20 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
 
             labelling_percentages = analyse.calculate_relative_labelling(analysed_peaks, window_scaled_y_data, ppm_error)
 
-            # # Visualise the ouputs:
-            # single_timepoint_spectra = os.path.join(pipeline_output_path, 'single_timepoint_spectra')
-            # if not os.path.exists(single_timepoint_spectra): os.mkdir(single_timepoint_spectra)
-            # visualise.show_single_timepoint_peaks(analysed_peaks,
-            #                                       window_x_data,
-            #                                       window_scaled_y_data,
-            #                                       labelling_percentages,
-            #                                       single_timepoint_spectra,
-            #                                       i_name,
-            #                                       ms_data_injection_df['Timepoint'][0],
-            #                                       50.00)
-
             for ap, lp in zip(analysed_peaks, labelling_percentages):
                 df_list = [i_name, compound_data_df['Compounds List'][i],ms_data_injection_df['Timepoint'][0], ap[1], ap[2], ap[3], ap[4], lp]
                 timepoint_peak_data.append(df_list)
             print('end timepoint {}, injection: {}'.format(str(t), i_name))
 
         timepoint_peak_data = np.array(timepoint_peak_data)
-        print(timepoint_peak_data.shape)
 
         # TODO: catch error if df_dict not assigned
         for l in range(len(injection_df_columns)):
             injection_df[injection_df_columns[l]] = timepoint_peak_data[:, l]
 
         # write the data somewhere sensible
-        injection_df_fname = os.path.join(analysed_data_path, "{}.csv".format(i_name))
-        injection_df.to_csv(injection_df_fname)
+        injection_df_fname = os.path.join(analysed_data_path, "{}_peaks.csv".format(i_name))
+        injection_df.to_csv(re.sub('\s+','-',injection_df_fname.replace(':','')))
 
         # Visualise the outputs
         # TODO: catch error if compound_smiles and corrected_compound_mw not assigned
@@ -119,50 +149,18 @@ def main(data_files_dict, timepoints, compound_data_path, pipeline_output_path, 
             for d in range(len(peak_plotting_data)):
                 data = peak_plotting_data[d]
                 d_mass_window_idxs = [np.where(data[0] == m)[0][0] for m in display_mass_window]
-                print(d_mass_window_idxs)
-                print(data.shape)
                 peak_plotting_data[d] = data[:, d_mass_window_idxs[0]:d_mass_window_idxs[1]]
-                print(peak_plotting_data[d].shape)
 
         png_path = visualise.plot_compound_summary_new(compound_data=peak_plotting_data,
                                             injection_df_fname=injection_df_fname,
                                             expected_protein_mass=theory_mass_protein,
                                             compound_smiles=compound_smiles,
                                             corrected_compound_mass=corrected_compound_mw,
-                                            save_dir=compound_summaries_dir)
+                                            save_dir=compound_summaries_dir,
+                                            x_axis_stagger=x_axis_stagger,
+                                            y_axis_stagger=y_axis_stagger)
 
 
 if __name__ == '__main__':
-    import sys
-
-    # Parameters needed to run the pipeline:
-    raw_data_direc = r"..\Protein observe MS_raw\Data analysis\Processed raw data\Shipment 4 and 5 hits\200527\Raw data from Agilent\Full .csv dataset for each timepoint"
-    data_files = {60: os.path.join(raw_data_direc, "1h all injections.csv"),
-                  3: os.path.join(raw_data_direc, "200611 Moonshot 3 minutes.csv"),
-                  180: os.path.join(raw_data_direc, "3H all injections.csv")}
-    if sys.platform=="win32":
-        for v in data_files.values():
-            v.replace(r"\\\\", r"\\")
-    timepoints = sorted(list(data_files.keys()))
-
-    compound_data_path = r"..\Protein observe MS_raw\200527 Shipment 4 and 5 compound list.csv"
-    if sys.platform=="win32":
-        compound_data_path.replace(r"\\\\", r"\\")
-
-    pipeline_output_path = 'pipeline_output'
-    protein_seq_fasta = "SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ"
-    target_mass_window = [33500, 40000]
-    plotting_mass_window = [33500, 35000]
-    peak_prominence = 0.02
-    ppm_error = 100.0
-
-    main(data_files_dict=data_files,
-         timepoints=timepoints,
-         compound_data_path=compound_data_path,
-         pipeline_output_path="new_outputs",
-         protein_sequence=protein_seq_fasta,
-         protein_oligo_state=1,
-         mass_window=target_mass_window,
-         peak_prominence=peak_prominence,
-         ppm_error=ppm_error,
-         display_mass_window=plotting_mass_window)
+                    
+    main()
