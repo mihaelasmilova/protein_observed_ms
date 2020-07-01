@@ -83,7 +83,7 @@ def main(config_file_path='config.yaml'):
     if protein_mass == 0.0:
         theory_mass_protein = analyse.protein_mw_from_sequence(protein_sequence, oligo_state=protein_oligo_state)
     else:
-        theory_mass_protein = protein_mass
+        theory_mass_protein = protein_mass * protein_oligo_state
 
     # Find, assign peaks + extract relative labelling
     analysed_data_path = os.path.join(pipeline_output_path, "analysed_injection_data")
@@ -99,7 +99,7 @@ def main(config_file_path='config.yaml'):
         timepoint_peak_data = []
         for t in timepoints:
             compound_smiles = compound_data_df[columns[2]][i]
-            compound_mw_correction = compound_data_df[columns[3]][i]
+            compound_mw_correction = compound_data_df[columns[4]][i]
             compound_mol, compound_mw, corrected_compound_mw = analyse.get_molecule_data_from_smiles(compound_smiles,
                                                                                                      compound_mw_correction)
 
