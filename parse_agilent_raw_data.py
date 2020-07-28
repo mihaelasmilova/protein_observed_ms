@@ -26,8 +26,11 @@ def parse_agilent_raw_no_dict(raw_data_csv_path, delimiter=',', timepoint=0.0):
             # The headers containing time information look like  '#"+ESI Scan <...>'
             if line.startswith('#"'):
                 if len(minutes) == 0:
-                    first_timepoint_file = float(line.split('-')[-1].split(' ')[0])
-                minute = float(line.split('-')[-1].split(' ')[0]) - first_timepoint_file + timepoint
+                    print(line)
+                    timepoint_range = line.split('Scan (')[1].split(')')[0]
+                    first_timepoint_file = float(timepoint_range.split('-')[0].split(' ')[1])
+                    print(first_timepoint_file)
+                minute = float(timepoint_range.split('-')[-1].split(' ')[0]) - first_timepoint_file + timepoint
                 minutes.append(round(minute, 2))
 
                 if i > 0:
@@ -122,23 +125,22 @@ def save_individual_injections(all_data,
 
 if __name__ == "__main__":
     import pandas as pd
+    from pathlib import Path
 
-    compounds_file = os.path.join("../Protein observe MS_raw", "200527 Shipment 4 and 5 compound list.csv")
-    compounds_data = pd.read_csv(compounds_file)
-    injection_names = ["{}_{}".format(j, i) for i, j in
-                       zip(compounds_data['Compounds List'], compounds_data['Injections'])]
+    # compounds_file = os.path.join("../Protein observe MS_raw", "200527 Shipment 4 and 5 compound list.csv")
+    # compounds_data = pd.read_csv(compounds_file)
+    # injection_names = ["{}_{}".format(j, i) for i, j in zip(compounds_data['Compounds List'], compounds_data['Injections'])]
 
-    raw_data_direc = "../Protein observe MS_raw/Data analysis/Processed raw data/Shipment 4 and 5 hits/200527/Raw data from Agilent/Full .csv dataset for each timepoint"
-    data_files = {'1h': "1h all injections.csv",
-                  '3m': "200611 Moonshot 3 minutes.csv",
-                  '3h': "3H all injections.csv"}
+    raw_data_direc = str(Path("..", "OneDrive_2020-07-28", "results Shipment 1,2 other", "3_min"))
+    data_files = {'3': "3_min_incubation.csv",
+                  '80': "80_min_S1_2_other.csv"}
 
 
-    split_save_dir = "all_timepoints_injections_split"
+    split_save_dir = str(Path("..", "OneDrive_2020-07-28", "results Shipment 1,2 other","all_timepoints_injections_split_new_data"))
     if not os.path.exists(split_save_dir): os.mkdir(split_save_dir)
 
     for timepoint in data_files.keys():
-        all_injections_timepoint = parse_agilent_raw(os.path.join(raw_data_direc, data_files[timepoint]))
+        all_injections_timepoint = parse_agilent_raw_no_dict(os.path.join(raw_data_direc, data_files[timepoint]))
         save_individual_injections(all_injections_timepoint,
                                    os.path.join(split_save_dir, timepoint),
                                    ["{}.csv".format(i) for i in injection_names])
